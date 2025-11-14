@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:library_app/Login.dart';
+import 'package:library_app/MainPage.dart';
 
 void main() {
   runApp(const MainApp());
@@ -19,7 +20,13 @@ class MainApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
       ),
-      home: Scaffold(resizeToAvoidBottomInset: false, body: Login()),
+
+      //to navigate between pages
+      initialRoute: '/Homepage',
+      routes: {
+        '/Login': (context) => const Login(),
+        '/Homepage': (context) => const HomePage(),
+      }, // Placeholder for MainPage},
     );
   }
 }
