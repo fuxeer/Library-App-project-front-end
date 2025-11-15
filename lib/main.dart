@@ -15,14 +15,18 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       //color theme for the app
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-          brightness: Brightness.light,
+        useMaterial3: true,
+        colorSchemeSeed: const Color(0xFF6D28D9), //بنفسجي انيق
+        inputDecorationTheme: const InputDecorationTheme(
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
         ),
       ),
 
       //to navigate between pages
-      initialRoute: '/Homepage',
+      initialRoute: '/Login',
       routes: {
         '/Login': (context) => const Login(),
         '/Homepage': (context) => const HomePage(),
