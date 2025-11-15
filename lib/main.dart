@@ -22,7 +22,7 @@ class MainApp extends StatelessWidget {
       ),
 
       //to navigate between pages
-      initialRoute: '/Homepage',
+      initialRoute: '/Login',
       routes: {
         '/Login': (context) => const Login(),
         '/Homepage': (context) => const HomePage(),
