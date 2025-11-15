@@ -52,15 +52,14 @@ class _HomePageState extends State<HomePage> {
 
   Future<List<Book>> getBooks() async {
     // This function would fetch data from an API or database]
-    final url = Uri.parse(
-      "https://mocki.io/v1/145917af-334f-476a-ac6b-d428abab1249",
-    );
+    final url = Uri.parse("https://localhost:7145/api/Books");
 
     try {
       final response = await http.get(
         url,
         headers: {'Content-Type': 'application/json'},
       );
+      print(response.statusCode);
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = jsonDecode(response.body);
@@ -68,7 +67,7 @@ class _HomePageState extends State<HomePage> {
         return books;
       }
     } catch (e) {
-      debugPrint(e.toString());
+      print(e);
     }
 
     return [];

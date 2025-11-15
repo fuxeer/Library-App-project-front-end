@@ -21,14 +21,14 @@ class Book {
 
   factory Book.fromJson(Map<String, dynamic> json) {
     return Book(
-      BookID: json['BookID'],
-      Title: json['Title'],
-      Author: json['Author'],
-      Description: json['Description'],
-      Category: json['Category'],
-      Publisher: json['Publisher'],
-      PublishYear: json['PublishYear'],
-      Rating: json['Rating'].toDouble(),
+      BookID: json['bookID'],
+      Title: json['title'],
+      Author: json['author'],
+      Description: json['description'],
+      Category: json['category'],
+      Publisher: json['publisher'],
+      PublishYear: json['publishYear'],
+      Rating: json['rating'].toDouble(),
     );
   }
 
