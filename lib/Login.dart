@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'model/User.dart';
+import 'model/CurrentUser.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -34,22 +36,25 @@ class _LoginState extends State<Login> {
         _errormessage = null;
       });
 
-      final url = Uri.parse("http://localhost:5119/api/Login");
+      final url = Uri.parse("https://localhost:7145/api/Users/login");
 
       //HTTP POST request
       try {
         final response = await http.post(
           url,
           headers: {"Content-Type": "application/json"},
-          body: jsonEncode({"username": username, "password": password}),
+          body: jsonEncode({"userName": username, "password": password}),
         );
 
         if (!mounted) return;
-
+        // successful login
         if (response.statusCode == 200) {
+          // parse user data
+          final responseData = jsonDecode(response.body);
+          currentUser = User.fromJson(responseData);
           Navigator.pushNamedAndRemoveUntil(
             context,
-            '/main', // go to MainPage
+            '/MainPage', // go to MainPage
             (route) => false, // remove all previous pages
           );
         }
@@ -60,7 +65,7 @@ class _LoginState extends State<Login> {
           });
         } else {
           setState(() {
-            _errormessage = "Error: please try again";
+            _errormessage = response.statusCode.toString();
           });
         }
       }
@@ -69,6 +74,7 @@ class _LoginState extends State<Login> {
         if (!mounted) return;
         setState(() {
           _errormessage = "Error: Connecton failed";
+          print(e);
         });
       }
       //
@@ -217,14 +223,15 @@ class _LoginState extends State<Login> {
                               : Text("Login"),
                         ),
                       ),
+
                       //register button
-                      SizedBox(
+                      /*SizedBox(
                         width: 120,
                         child: ElevatedButton(
                           onPressed: () => debugPrint("Register"),
                           child: Text("Register"),
                         ),
-                      ),
+                      )*/
                     ],
                   ),
                   // Show error message if exists

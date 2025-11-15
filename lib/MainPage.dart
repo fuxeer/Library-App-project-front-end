@@ -1,4 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'model/Book.dart';
+import 'model/CurrentUser.dart';
+import 'package:http/http.dart' as http;
 
 void main() => runApp(const MyApp());
 
@@ -24,21 +28,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// the Book class
-class Book {
-  final String title, author, category;
-  final double rating;
-  final int year;
-
-  const Book({
-    required this.title,
-    required this.author,
-    required this.rating,
-    required this.category,
-    required this.year,
-  });
-}
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
   @override
@@ -46,69 +35,43 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // the books
-  final allBooks = const <Book>[
-    Book(title: 'Are We Alone?',
-    author: 'Group of People',
-    rating: 4.3,
-    category: 'Science',
-    year: 2019
-    ),
-    Book(title: 'Clean Code',
-    author: 'Robert C. Martin',
-    rating: 4.8,
-    category: 'Programming',
-    year: 2008
-    ),
-    Book(title: 'Flutter in Action',
-    author: 'Eric Windmill',
-    rating: 4.6,
-    category: 'Programming',
-    year: 2020
-    ),
-    Book(title: 'Design Patterns',
-    author: 'GoF',
-    rating: 4.7,
-    category: 'Programming',
-    year: 1994
-    ),
-    Book(title: 'The Pragmatic Programmer',
-    author: 'Andrew Hunt',
-    rating: 4.9,
-    category: 'Programming',
-    year: 1999
-    ),
-    Book(title: 'Atomic Habits',
-    author: 'James Clear',
-    rating: 4.5,
-    category: 'Self-Help',
-    year: 2018
-    ),
-    Book(title: 'Deep Work',
-    author: 'Cal Newport',
-    rating: 4.4,
-    category: 'Productivity',
-    year: 2016
-    ),
-    Book(title: 'Clean Architecture',
-    author: 'Robert C. Martin',
-    rating: 4.7,
-    category: 'Programming',
-    year: 2017
-    ),
-    Book(title: 'The Art of Computer Programming',
-    author: 'Donald Knuth',
-    rating: 4.9,
-    category: 'Programming',
-    year: 1968
-    ),
-    Book(title: 'Think Like a Monk',
-    author: 'Jay Shetty',
-    rating: 4.2,
-    category: 'Self-Help',
-    year: 2020
-    ),
-  ];
+  List<Book> allBooks = [];
+  @override
+  void initState() {
+    super.initState();
+    _loadBooks();
+  }
+
+  Future<void> _loadBooks() async {
+    final books = await getBooks();
+
+    setState(() {
+      allBooks = books;
+    });
+  }
+
+  Future<List<Book>> getBooks() async {
+    // This function would fetch data from an API or database]
+    final url = Uri.parse("https://localhost:7145/api/Books");
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = jsonDecode(response.body);
+        final books = jsonData.map((item) => Book.fromJson(item)).toList();
+        return books;
+      }
+    } catch (e) {
+      print(e);
+    }
+
+    return [];
+  }
 
   // Filters
   String query = '';
@@ -143,9 +106,9 @@ class _HomePageState extends State<HomePage> {
 
     // Sorting
     list.sort((a, b) {
-      final cmp = sortBy == 'rating'
-          ? a.rating.compareTo(b.rating)
-          : a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      int cmp = sortBy == 'rating'
+          ? a.Rating.compareTo(b.Rating)
+          : a.Title.toLowerCase().compareTo(b.Title.toLowerCase());
       return descending ? -cmp : cmp;
     });
 
@@ -154,7 +117,7 @@ class _HomePageState extends State<HomePage> {
 
   // Open filter bottom sheet
   void _openFilter() async {
-    final categories = <String>{...allBooks.map((b) => b.category)}.toList()
+    final categories = <String>{...allBooks.map((b) => b.Category)}.toList()
       ..sort();
 
     final result = await showModalBottomSheet<_FiltersResult>(
@@ -332,14 +295,27 @@ class _BookCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(book.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text('Author: ${book.author}'),
-                Text('Category: ${book.category}', style: const TextStyle(color: Colors.grey)),
-                Text('Published: ${book.year}', style: const TextStyle(color: Colors.grey)),
+                Text(
+                  book.Title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text('Author: ${book.Author}'),
+                Text(
+                  'Category: ${book.Category}',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                Text(
+                  'Published: ${book.PublishYear}',
+                  style: const TextStyle(color: Colors.grey),
+                ), // 👈 ADD THIS
               ],
             ),
           ),
-          Text('${book.rating} / 5'),
+          Text('${book.Rating} / 5'),
         ],
       ),
     );
