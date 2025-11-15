@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'model/User.dart';
+import 'model/CurrentUser.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -34,7 +36,7 @@ class _LoginState extends State<Login> {
         _errormessage = null;
       });
 
-      final url = Uri.parse("http://localhost:5119/api/Login");
+      final url = Uri.parse("http://localhost:5119/api/Users/Login");
 
       //HTTP POST request
       try {
@@ -45,11 +47,14 @@ class _LoginState extends State<Login> {
         );
 
         if (!mounted) return;
-
+        // successful login
         if (response.statusCode == 200) {
+          // parse user data
+          final responseData = jsonDecode(response.body);
+          currentUser = User.fromJson(responseData);
           Navigator.pushNamedAndRemoveUntil(
             context,
-            '/main', // go to MainPage
+            '/MainPage', // go to MainPage
             (route) => false, // remove all previous pages
           );
         }
@@ -217,14 +222,15 @@ class _LoginState extends State<Login> {
                               : Text("Login"),
                         ),
                       ),
+
                       //register button
-                      SizedBox(
+                      /*SizedBox(
                         width: 120,
                         child: ElevatedButton(
                           onPressed: () => debugPrint("Register"),
                           child: Text("Register"),
                         ),
-                      ),
+                      )*/
                     ],
                   ),
                   // Show error message if exists

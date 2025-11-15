@@ -1,4 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'model/Book.dart';
+import 'model/CurrentUser.dart';
+import 'package:http/http.dart' as http;
 
 void main() => runApp(const MyApp());
 
@@ -24,20 +28,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class Book {
-  final String title, author, category;
-  final double rating;
-  final int year;
-
-  const Book({
-    required this.title,
-    required this.author,
-    required this.rating,
-    required this.category,
-    required this.year,
-  });
-}
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
   @override
@@ -45,78 +35,44 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final allBooks = const <Book>[
-    Book(
-      title: 'Are We Alone?',
-      author: 'Group of People',
-      rating: 4.3,
-      category: 'Science',
-      year: 2019,
-    ),
-    Book(
-      title: 'Clean Code',
-      author: 'Robert C. Martin',
-      rating: 4.8,
-      category: 'Programming',
-      year: 2008,
-    ),
-    Book(
-      title: 'Flutter in Action',
-      author: 'Eric Windmill',
-      rating: 4.6,
-      category: 'Programming',
-      year: 2020,
-    ),
-    Book(
-      title: 'Design Patterns',
-      author: 'GoF',
-      rating: 4.7,
-      category: 'Programming',
-      year: 1994,
-    ),
-    Book(
-      title: 'The Pragmatic Programmer',
-      author: 'Andrew Hunt',
-      rating: 4.9,
-      category: 'Programming',
-      year: 1999,
-    ),
-    Book(
-      title: 'Atomic Habits',
-      author: 'James Clear',
-      rating: 4.5,
-      category: 'Self-Help',
-      year: 2018,
-    ),
-    Book(
-      title: 'Deep Work',
-      author: 'Cal Newport',
-      rating: 4.4,
-      category: 'Productivity',
-      year: 2016,
-    ),
-    Book(
-      title: 'Clean Architecture',
-      author: 'Robert C. Martin',
-      rating: 4.7,
-      category: 'Programming',
-      year: 2017,
-    ),
-    Book(
-      title: 'The Art of Computer Programming',
-      author: 'Donald Knuth',
-      rating: 4.9,
-      category: 'Programming',
-      year: 1968,
-    ),
-    Book(
-      title: 'Think Like a Monk',
-      author: 'Jay Shetty',
-      rating: 4.2,
-      category: 'Self-Help',
-      year: 2020,
-    ),
-  ];
+  List<Book> allBooks = [];
+  @override
+  void initState() {
+    super.initState();
+    _loadBooks();
+  }
+
+  Future<void> _loadBooks() async {
+    final books = await getBooks();
+
+    setState(() {
+      allBooks = books;
+    });
+  }
+
+  Future<List<Book>> getBooks() async {
+    // This function would fetch data from an API or database]
+    final url = Uri.parse(
+      "https://mocki.io/v1/145917af-334f-476a-ac6b-d428abab1249",
+    );
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = jsonDecode(response.body);
+        final books = jsonData.map((item) => Book.fromJson(item)).toList();
+        return books;
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+
+    return [];
+  }
 
   String query = '';
   String category = '';
@@ -128,25 +84,25 @@ class _HomePageState extends State<HomePage> {
     final q = query.toLowerCase();
     final list = allBooks.where((b) {
       final matchQ =
-          b.title.toLowerCase().contains(q) ||
-          b.author.toLowerCase().contains(q) ||
-          b.year.toString().contains(q);
-      final matchC = category.isEmpty ? true : b.category == category;
-      final matchR = b.rating >= minRating;
+          b.Title.toLowerCase().contains(q) ||
+          b.Author.toLowerCase().contains(q) ||
+          b.PublishYear.toString().contains(q);
+      final matchC = category.isEmpty ? true : b.Category == category;
+      final matchR = b.Rating >= minRating;
       return matchQ && matchC && matchR;
     }).toList();
 
     list.sort((a, b) {
       int cmp = sortBy == 'rating'
-          ? a.rating.compareTo(b.rating)
-          : a.title.toLowerCase().compareTo(b.title.toLowerCase());
+          ? a.Rating.compareTo(b.Rating)
+          : a.Title.toLowerCase().compareTo(b.Title.toLowerCase());
       return descending ? -cmp : cmp;
     });
     return list;
   }
 
   void _openFilter() async {
-    final categories = <String>{...allBooks.map((b) => b.category)}.toList()
+    final categories = <String>{...allBooks.map((b) => b.Category)}.toList()
       ..sort();
     final result = await showModalBottomSheet<_FiltersResult>(
       context: context,
@@ -309,26 +265,26 @@ class _BookCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  book.title,
+                  book.Title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text('Author: ${book.author}'),
+                Text('Author: ${book.Author}'),
                 Text(
-                  'Category: ${book.category}',
+                  'Category: ${book.Category}',
                   style: const TextStyle(color: Colors.grey),
                 ),
                 Text(
-                  'Published: ${book.year}',
+                  'Published: ${book.PublishYear}',
                   style: const TextStyle(color: Colors.grey),
                 ), // 👈 ADD THIS
               ],
             ),
           ),
-          Text('${book.rating} / 5'),
+          Text('${book.Rating} / 5'),
         ],
       ),
     );
