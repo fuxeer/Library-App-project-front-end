@@ -36,7 +36,7 @@ class _LoginState extends State<Login> {
         _errormessage = null;
       });
 
-      final url = Uri.parse("http://localhost:5119/api/Login");
+      final url = Uri.parse("http://localhost:5119/api/Users/Login");
 
       //HTTP POST request
       try {
@@ -54,7 +54,7 @@ class _LoginState extends State<Login> {
           currentUser = User.fromJson(responseData);
           Navigator.pushNamedAndRemoveUntil(
             context,
-            '/main', // go to MainPage
+            '/MainPage', // go to MainPage
             (route) => false, // remove all previous pages
           );
         }
