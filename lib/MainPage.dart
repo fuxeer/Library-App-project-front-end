@@ -90,16 +90,16 @@ class _HomePageState extends State<HomePage> {
 
     final list = allBooks.where((b) {
       final matchQuery =
-          b.title.toLowerCase().contains(q) ||
-          b.author.toLowerCase().contains(q) ||
-          b.year.toString().contains(q);
+          b.Title.toLowerCase().contains(q) ||
+          b.Author.toLowerCase().contains(q) ||
+          b.PublishYear.toString().contains(q);
 
-      final matchCategory = category.isEmpty || b.category == category;
-      final matchRating = b.rating >= minRating;
+      final matchCategory = category.isEmpty || b.Category == category;
+      final matchRating = b.Rating >= minRating;
 
       final matchYear =
-          (fromYear == null || b.year >= fromYear!) &&
-          (toYear == null || b.year <= toYear!);
+          (fromYear == null || b.PublishYear >= fromYear!) &&
+          (toYear == null || b.PublishYear <= toYear!);
 
       return matchQuery && matchCategory && matchRating && matchYear;
     }).toList();
@@ -150,13 +150,13 @@ class _HomePageState extends State<HomePage> {
 
   // Reset filters (reset button)
   void _resetFilters() => setState(() {
-        category = '';
-        minRating = 0.0;
-        sortBy = 'title';
-        descending = false;
-        fromYear = null;
-        toYear = null;
-      });
+    category = '';
+    minRating = 0.0;
+    sortBy = 'title';
+    descending = false;
+    fromYear = null;
+    toYear = null;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +176,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      // the profile 
+      // the profile
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -188,7 +188,10 @@ class _HomePageState extends State<HomePage> {
                   child: const Icon(Icons.person),
                 ),
                 const SizedBox(width: 10),
-                const Text('Mohammed', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                Text(
+                  currentUser?.name ?? 'No name',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
               ],
             ),
 
@@ -199,7 +202,10 @@ class _HomePageState extends State<HomePage> {
               decoration: InputDecoration(
                 hintText: 'Search for book',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(onPressed: _openFilter, icon: const Icon(Icons.tune)),
+                suffixIcon: IconButton(
+                  onPressed: _openFilter,
+                  icon: const Icon(Icons.tune),
+                ),
               ),
             ),
 
@@ -213,7 +219,7 @@ class _HomePageState extends State<HomePage> {
                   _chip(category, onClear: () => setState(() => category = '')),
 
                 _chip('≥ ${minRating.toStringAsFixed(1)} ★'),
-                
+
                 if (fromYear != null || toYear != null)
                   _chip(
                     'Year: ${fromYear ?? "Any"} → ${toYear ?? "Any"}',
@@ -234,7 +240,10 @@ class _HomePageState extends State<HomePage> {
                     descending ||
                     fromYear != null ||
                     toYear != null)
-                  ActionChip(label: const Text('Reset'), onPressed: _resetFilters),
+                  ActionChip(
+                    label: const Text('Reset'),
+                    onPressed: _resetFilters,
+                  ),
               ],
             ),
 
@@ -243,7 +252,12 @@ class _HomePageState extends State<HomePage> {
             if (books.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(32),
-                child: Center(child: Text('No books found 😢', style: TextStyle(color: Colors.grey))),
+                child: Center(
+                  child: Text(
+                    'No books found 😢',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
               )
             else
               ...books.map((b) => _BookCard(book: b)),
@@ -274,7 +288,7 @@ class _BookCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: cs.surfaceVariant.withOpacity(.4),
+        color: cs.surfaceContainerHighest.withOpacity(.4),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cs.outlineVariant),
       ),
@@ -341,7 +355,7 @@ class _FiltersResult {
   );
 }
 
-// FILTER SHEET 
+// FILTER SHEET
 class _FilterSheet extends StatefulWidget {
   final List<String> categories;
   final _FiltersResult initial;
@@ -363,7 +377,7 @@ class _FilterSheetState extends State<_FilterSheet> {
   // controller for the years textfield
   TextEditingController? fromYearController;
   TextEditingController? toYearController;
-  // state update 
+  // state update
   @override
   void initState() {
     super.initState();
@@ -380,10 +394,9 @@ class _FilterSheetState extends State<_FilterSheet> {
       text: fromYear?.toString() ?? '',
     );
 
-    toYearController = TextEditingController(
-      text: toYear?.toString() ?? '',
-    );
+    toYearController = TextEditingController(text: toYear?.toString() ?? '');
   }
+
   // building the filter dropdown sheet
   @override
   Widget build(BuildContext context) {
@@ -409,36 +422,49 @@ class _FilterSheetState extends State<_FilterSheet> {
 
           const Align(
             alignment: Alignment.centerLeft,
-            child: Text('Filters', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            child: Text(
+              'Filters',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
           ),
 
           const SizedBox(height: 12),
           // building the category dropdown menu
           DropdownButtonFormField<String>(
-            value: category.isEmpty ? '' : category,
+            initialValue: category.isEmpty ? '' : category,
             items: [
               const DropdownMenuItem(value: '', child: Text('Any')),
-              ...widget.categories.map((c) => DropdownMenuItem(value: c, child: Text(c))),
+              ...widget.categories.map(
+                (c) => DropdownMenuItem(value: c, child: Text(c)),
+              ),
             ],
             onChanged: (v) => setState(() => category = v ?? ''),
             decoration: const InputDecoration(labelText: 'Category'),
-            ),
+          ),
 
           const SizedBox(height: 12),
           // building the rating slider
           Row(
             children: [
               Expanded(
-                child: Slider(    
+                child: Slider(
                   value: minRating,
                   min: 0,
                   max: 5,
                   divisions: 50,
                   label: minRating.toStringAsFixed(1),
-                  onChanged: (v) => setState(() => minRating = double.parse(v.toStringAsFixed(1))),
+                  onChanged: (v) => setState(
+                    () => minRating = double.parse(v.toStringAsFixed(1)),
+                  ),
                 ),
               ),
-              SizedBox(width: 64, child: Text('${minRating.toStringAsFixed(1)} ★', textAlign: TextAlign.center)),
+              SizedBox(
+                width: 64,
+                child: Text(
+                  '${minRating.toStringAsFixed(1)} ★',
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ],
           ),
 
@@ -452,7 +478,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                   controller: fromYearController!,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(labelText: 'From Year'),
-                  onChanged: (v) => setState(() => fromYear = v.isEmpty ? null : int.tryParse(v)),
+                  onChanged: (v) => setState(
+                    () => fromYear = v.isEmpty ? null : int.tryParse(v),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -461,14 +489,16 @@ class _FilterSheetState extends State<_FilterSheet> {
                   controller: toYearController!,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(labelText: 'To Year'),
-                  onChanged: (v) => setState(() => toYear = v.isEmpty ? null : int.tryParse(v)),
+                  onChanged: (v) => setState(
+                    () => toYear = v.isEmpty ? null : int.tryParse(v),
+                  ),
                 ),
               ),
             ],
           ),
 
           const SizedBox(height: 12),
-          // building the segmented button for sorting by title/rating 
+          // building the segmented button for sorting by title/rating
           Row(
             children: [
               Expanded(

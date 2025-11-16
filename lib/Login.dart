@@ -52,6 +52,7 @@ class _LoginState extends State<Login> {
           // parse user data
           final responseData = jsonDecode(response.body);
           currentUser = User.fromJson(responseData);
+          print(response.body);
           Navigator.pushNamedAndRemoveUntil(
             context,
             '/MainPage', // go to MainPage
