@@ -36,14 +36,14 @@ class _LoginState extends State<Login> {
         _errormessage = null;
       });
 
-      final url = Uri.parse("http://localhost:5119/api/Users/Login");
+      final url = Uri.parse("https://localhost:7145/api/Users/login");
 
       //HTTP POST request
       try {
         final response = await http.post(
           url,
           headers: {"Content-Type": "application/json"},
-          body: jsonEncode({"username": username, "password": password}),
+          body: jsonEncode({"userName": username, "password": password}),
         );
 
         if (!mounted) return;
@@ -52,6 +52,7 @@ class _LoginState extends State<Login> {
           // parse user data
           final responseData = jsonDecode(response.body);
           currentUser = User.fromJson(responseData);
+          print(response.body);
           Navigator.pushNamedAndRemoveUntil(
             context,
             '/MainPage', // go to MainPage
@@ -65,7 +66,7 @@ class _LoginState extends State<Login> {
           });
         } else {
           setState(() {
-            _errormessage = "Error: please try again";
+            _errormessage = response.statusCode.toString();
           });
         }
       }
@@ -74,6 +75,7 @@ class _LoginState extends State<Login> {
         if (!mounted) return;
         setState(() {
           _errormessage = "Error: Connecton failed";
+          print(e);
         });
       }
       //

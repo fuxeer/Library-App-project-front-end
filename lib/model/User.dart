@@ -1,5 +1,5 @@
-class User {
-  final int UserID;
+/*class User {
+  final int? UserID;
   final String Name;
   final String UserName;
   final String Password;
@@ -50,6 +50,63 @@ class User {
       'phoneNo': PhoneNo,
       'address': Address,
       'userType': UserType,
+    };
+  }
+}
+*/
+
+class User {
+  final int? userID;
+  final String? name;
+  final String? userName;
+  final String? password;
+  final String? email;
+  final String? dateOfBirth;
+  final String? gender;
+  final int? phoneNo;
+  final String? address;
+  final String? userType;
+
+  User({
+    this.userID,
+    this.name,
+    this.userName,
+    this.password,
+    this.email,
+    this.dateOfBirth,
+    this.gender,
+    this.phoneNo,
+    this.address,
+    this.userType,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      userID: json['UserID'],
+      name: json['Name'],
+      userName: json['UserName'],
+      password: json['Password'],
+      email: json['Email'],
+      dateOfBirth: json['DateOfBirth'],
+      gender: json['Gender'],
+      phoneNo: json['PhoneNo'],
+      address: json['Address'],
+      userType: json['UserType'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'UserID': userID,
+      'Name': name,
+      'UserName': userName,
+      'Password': password,
+      'Email': email,
+      'DateOfBirth': dateOfBirth,
+      'Gender': gender,
+      'PhoneNo': phoneNo,
+      'Address': address,
+      'UserType': userType,
     };
   }
 }
