@@ -1,8 +1,12 @@
+//mainpage
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:library_app/filter.dart';
 import 'model/Book.dart';
 import 'model/CurrentUser.dart';
 import 'package:http/http.dart' as http;
+import 'filter.dart';
+import 'BookCard.dart';
 
 void main() => runApp(const MyApp());
 
@@ -86,34 +90,54 @@ class _HomePageState extends State<HomePage> {
 
   // Filtered book list
   List<Book> get _filtered {
-    final q = query.toLowerCase();
+  return BookFilter.apply(
+    books: allBooks,
+    query: query,
+    category: category,
+    minRating: minRating,
+    sortBy: sortBy,
+    descending: descending,
+  );
+}
+//NEW:added the drawer to put functionality in the menu icon
+Widget _buildMenuDrawer() {
+  return Drawer(
+    child: SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(13),
+        children: [
 
-    final list = allBooks.where((b) {
-      final matchQuery =
-          b.Title.toLowerCase().contains(q) ||
-          b.Author.toLowerCase().contains(q) ||
-          b.PublishYear.toString().contains(q);
+          const Text(
+            "Menu",
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
 
-      final matchCategory = category.isEmpty || b.Category == category;
-      final matchRating = b.Rating >= minRating;
+          const SizedBox(height: 20),
 
-      final matchYear =
-          (fromYear == null || b.PublishYear >= fromYear!) &&
-          (toYear == null || b.PublishYear <= toYear!);
+          ListTile(
+            leading: const Icon(Icons.bookmark),
+            title: const Text("Reservations"),
+            onTap: () {}
+            ,
+          ),
 
-      return matchQuery && matchCategory && matchRating && matchYear;
-    }).toList();
+          ListTile(
+            leading: const Icon(Icons.library_books),
+            title: const Text("Browse Books"),
+            onTap: () {}
+            ,
+          ),
 
-    // Sorting
-    list.sort((a, b) {
-      int cmp = sortBy == 'rating'
-          ? a.Rating.compareTo(b.Rating)
-          : a.Title.toLowerCase().compareTo(b.Title.toLowerCase());
-      return descending ? -cmp : cmp;
-    });
-
-    return list;
-  }
+          ListTile(
+            leading: const Icon(Icons.support_agent),
+            title: const Text("Support"),
+            onTap: () {},
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   // Open filter bottom sheet
   void _openFilter() async {
@@ -166,16 +190,19 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(''),
+        // NEW: added functionality to the menu icon button
         actions: [
-          InkWell(
-            borderRadius: BorderRadius.circular(30),
-            child: const Padding(
-              padding: EdgeInsetsDirectional.only(end: 12),
-              child: Icon(Icons.menu),
-            ),
-          ),
+          Builder(
+            builder: (context) {
+              return IconButton(
+                icon: const Icon(Icons.menu),
+                  onPressed: () => Scaffold.of(context).openEndDrawer(),
+              );
+            }
+          )
         ],
       ),
+       endDrawer: _buildMenuDrawer(),
       // the profile
       body: SafeArea(
         child: ListView(
@@ -260,7 +287,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               )
             else
-              ...books.map((b) => _BookCard(book: b)),
+              ...books.map((b) => BookCard(book: b)),
           ],
         ),
       ),
@@ -276,65 +303,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// for building the book card ui
-class _BookCard extends StatelessWidget {
-  final Book book;
-  const _BookCard({required this.book});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withOpacity(.4),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 56,
-            decoration: BoxDecoration(
-              color: cs.primaryContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.menu_book),
-          ),
-          const SizedBox(width: 12),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  book.Title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text('Author: ${book.Author}'),
-                Text(
-                  'Category: ${book.Category}',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                Text(
-                  'Published: ${book.PublishYear}',
-                  style: const TextStyle(color: Colors.grey),
-                ), // 👈 ADD THIS
-              ],
-            ),
-          ),
-          Text('${book.Rating} / 5'),
-        ],
-      ),
-    );
-  }
-}
 
 // Filter result model
 class _FiltersResult {
@@ -377,6 +345,7 @@ class _FilterSheetState extends State<_FilterSheet> {
   // controller for the years textfield
   TextEditingController? fromYearController;
   TextEditingController? toYearController;
+
   // state update
   @override
   void initState() {
