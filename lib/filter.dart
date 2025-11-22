@@ -1,7 +1,5 @@
 //filter
-import 'package:flutter/material.dart';
 import 'model/Book.dart';
-import '../MainPage.dart';
 
 class BookFilter{
   static List<Book> apply({

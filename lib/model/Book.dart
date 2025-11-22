@@ -16,7 +16,7 @@ class Book {
     required this.Category,
     required this.Publisher,
     required this.PublishYear,
-    required this.Rating,
+    required this.Rating, required id,
   });
 
   factory Book.fromJson(Map<String, dynamic> json) {
@@ -28,9 +28,11 @@ class Book {
       Category: json['category'],
       Publisher: json['publisher'],
       PublishYear: json['publishYear'],
-      Rating: json['rating'].toDouble(),
+      Rating: json['rating'].toDouble(), id: null,
     );
   }
+
+  get id => null;
 
   Map<String, dynamic> toJson() {
     return {

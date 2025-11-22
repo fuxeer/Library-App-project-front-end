@@ -1,15 +1,20 @@
 //mainpage
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:library_app/filter.dart';
+import 'package:library_app/model/CurrentUser.dart';
 import 'model/Book.dart';
-import 'model/CurrentUser.dart';
 import 'package:http/http.dart' as http;
-import 'BookCard.dart';
+import 'AdminBC.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+
+
+
+
+
 
 void main() => runApp(const MyApp());
 
@@ -30,25 +35,27 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomePage(),
+      home: const AdminHomePage(),
     );
   }
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class AdminHomePage extends StatefulWidget {
+  const AdminHomePage({super.key});
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<AdminHomePage> createState() => _AdminHomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _AdminHomePageState extends State<AdminHomePage> {
   List<Book> allBooks = [];
   @override
   void initState() {
     super.initState();
     _loadBooks();
   }
-  Uint8List? profilePicBytes;   
+
+
+ Uint8List? profilePicBytes;   
  Uint8List? tempPicBytes;
          
 
@@ -84,7 +91,90 @@ Future<Uint8List?> pickImageBytes() async {
   }
 }
 
-// NEW: for updating the profile info (just a placeholder)
+
+  List<Book> getMockBooks() {
+  return [
+    Book(
+      id: 1,
+      Title: "Are We Alone?",
+      Author: "Group of People",
+      Category: "Science",
+      Rating: 4.5,
+      PublishYear: 2021, BookID: 3, Description: '', Publisher: '',
+    ),
+    Book(
+      id: 2,
+      Title: "The Lost Kingdom",
+      Author: "Sarah Miller",
+      Category: "Fantasy",
+      Rating: 4.0,
+      PublishYear: 2019, BookID: 2, Description: '', Publisher: '',
+    ),
+    Book(
+      id: 3,
+      Title: "Preeng in Dart",
+      Author: "John Adams",
+      Category: "Technology",
+      Rating: 4.8,
+      PublishYear: 2023, BookID: 1, Description: '', Publisher: '',
+    ),
+    Book(
+      id: 3,
+      Title: "Prrrerret",
+      Author: "John Adams",
+      Category: "Technology",
+      Rating: 4.8,
+      PublishYear: 2023, BookID: 1, Description: '', Publisher: '',
+    ),
+    Book(
+      id: 3,
+      Title: "weewqe",
+      Author: "John Adams",
+      Category: "Technology",
+      Rating: 4.8,
+      PublishYear: 2023, BookID: 1, Description: '', Publisher: '',
+    ),
+  ];
+}
+/*Future<void> _loadBooks() async { 
+  final books = await getBooks(); 
+  setState(() {
+    allBooks = books; 
+  }); 
+}  */
+
+  Future<void> _loadBooks() async {
+  // USE MOCK BOOKS
+  final books = getMockBooks();
+
+  setState(() {
+    allBooks = books;
+  });
+}
+
+  Future<List<Book>> getBooks() async {
+    // This function would fetch data from an API or database]
+    final url = Uri.parse("https://localhost:7145/api/Books");
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = jsonDecode(response.body);
+        final books = jsonData.map((item) => Book.fromJson(item)).toList();
+        return books;
+      }
+    } catch (e) {
+      print(e);
+    }
+
+    return [];
+  }
+ // NEW: for updating the profile info (just a placeholder)
  void _openProfileDialog() {
   Uint8List? tempPic = profilePicBytes; // current picture
   final usernameCtrl = TextEditingController();
@@ -172,7 +262,85 @@ Future<Uint8List?> pickImageBytes() async {
     },
   );
 }
-Widget _editField(
+
+
+  // NEW: added funtionality to the add book(+) button
+ void _openAddDialog() {
+   final titleController = TextEditingController();
+  final authorController = TextEditingController();
+  final categoryController = TextEditingController();
+  final ratingController = TextEditingController();
+  final yearController = TextEditingController();
+  final publisherController = TextEditingController();
+  final descriptionController = TextEditingController();
+  showDialog(
+    context: context,
+    builder: (_) => Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Add a Book",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            _editField("Title", titleController, maxLines: 1),
+            const SizedBox(height: 20),
+
+            _editField("Author", authorController, maxLines: 1),
+            const SizedBox(height: 20),
+
+            _editField("Category", categoryController, maxLines: 1),
+            const SizedBox(height: 20),
+
+            _editField("Rating", ratingController, keyboard: TextInputType.number, maxLines: 1),
+            const SizedBox(height: 20),
+
+            _editField("Year", yearController, keyboard: TextInputType.number, maxLines: 1),
+            const SizedBox(height: 20),
+
+            _editField("publisher", publisherController, maxLines: 1),
+            const SizedBox(height: 20),
+
+            _editField("Description", descriptionController, maxLines: 3),
+            const SizedBox(height: 20),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    // No functionality yet 
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Save"),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+ Widget _editField(
   String label,
   TextEditingController controller, {
   TextInputType keyboard = TextInputType.text, required int maxLines,
@@ -189,37 +357,6 @@ Widget _editField(
     ),
   );
 }
-
-  Future<void> _loadBooks() async {
-    final books = await getBooks();
-
-    setState(() {
-      allBooks = books;
-    });
-  }
-
-  Future<List<Book>> getBooks() async {
-    // This function would fetch data from an API or database]
-    final url = Uri.parse("https://localhost:7145/api/Books");
-
-    try {
-      final response = await http.get(
-        url,
-        headers: {'Content-Type': 'application/json'},
-      );
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonData = jsonDecode(response.body);
-        final books = jsonData.map((item) => Book.fromJson(item)).toList();
-        return books;
-      }
-    } catch (e) {
-      print(e);
-    }
-
-    return [];
-  }
 
   // Filters
   String query = '';
@@ -243,7 +380,7 @@ Widget _editField(
     descending: descending,
   );
 }
-// drawer to put functionality in the menu icon
+// puting functionality in the menu icon
 Widget _buildMenuDrawer() {
   return Drawer(
     child: SafeArea(
@@ -260,7 +397,7 @@ Widget _buildMenuDrawer() {
 
           ListTile(
             leading: const Icon(Icons.bookmark),
-            title: const Text("Reservations"),
+            title: const Text("Customer Reservations"),
             onTap: () {}
             ,
           ),
@@ -326,20 +463,24 @@ Widget _buildMenuDrawer() {
     toYear = null;
   });
 
+
   @override
   Widget build(BuildContext context) {
     final books = _filtered;
-    // avatar
+    // menu
     return Scaffold(
+      //New: made the profile in the appbar
       appBar: AppBar(
-  leadingWidth: 140,
-  leading: InkWell(
-    onTap: _openProfileDialog,
-    child: Row(
-      children: [
-        const SizedBox(width: 12),
-        
-        CircleAvatar(
+        leadingWidth: 140, 
+        leading: InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: _openProfileDialog,
+          child: Row(
+            children: [
+              const SizedBox(width: 12),
+
+            // Avatar
+            CircleAvatar(
               radius: 16,
               backgroundImage: profilePicBytes != null
               ? MemoryImage(profilePicBytes!)
@@ -347,101 +488,123 @@ Widget _buildMenuDrawer() {
               child: profilePicBytes == null ? Icon(Icons.person) : null,
             ),
 
-        const SizedBox(width: 8),
+            const SizedBox(width: 8),
 
-        Text(currentUser?.name ?? "No name",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-      ],
+            // Username
+            Text(
+              currentUser?.name ?? "No name",
+              style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     ),
-  ),
+
+
   actions: [
+    //NEW: ADD BUTTON
+    IconButton(
+      icon: const Icon(Icons.add),
+      onPressed: _openAddDialog,
+    ),
+
+    // MENU BUTTON
     Builder(
       builder: (context) {
         return IconButton(
-           // menu 
-          icon: Icon(Icons.menu),
-
+          icon: const Icon(Icons.menu),
           onPressed: () => Scaffold.of(context).openEndDrawer(),
         );
       },
     ),
   ],
 ),
-endDrawer: _buildMenuDrawer(),
 
 
-body: ListView(
-  padding: const EdgeInsets.all(16),
-  children: [
-    const SizedBox(height: 16),
+       endDrawer: _buildMenuDrawer(),
+      // the profile
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const SizedBox(height: 16),
+            // search textfield + filter button
+            TextField(
+              onChanged: (v) => setState(() => query = v),
+              decoration: InputDecoration(
+                hintText: 'Search for book',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  onPressed: _openFilter,
+                  icon: const Icon(Icons.tune),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
 
-    TextField(
-      onChanged: (v) => setState(() => query = v),
-      decoration: InputDecoration(
-        hintText: 'Search for book',
-        prefixIcon: Icon(Icons.search),
-        suffixIcon: IconButton(
-          onPressed: _openFilter,
-          icon: Icon(Icons.tune),
+
+            // helper method for active filter
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (category.isNotEmpty)
+                  _chip(category, onClear: () => setState(() => category = '')),
+
+                _chip('≥ ${minRating.toStringAsFixed(1)} ★'),
+
+                if (fromYear != null || toYear != null)
+                  _chip(
+                    'Year: ${fromYear ?? "Any"} → ${toYear ?? "Any"}',
+                    onClear: () => setState(() {
+                      fromYear = null;
+                      toYear = null;
+                    }),
+                  ),
+
+                _chip(
+                  (sortBy == 'rating' ? 'Sort: rating' : 'Sort: title') +
+                      (descending ? ' ↓' : ' ↑'),
+                ),
+
+
+                // reset button
+                if (category.isNotEmpty ||
+                    minRating > 0 ||
+                    sortBy != 'title' ||
+                    descending ||
+                    fromYear != null ||
+                    toYear != null)
+                  ActionChip(
+                    label: const Text('Reset'),
+                    onPressed: _resetFilters,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+
+            // the book is not Available
+            if (books.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(
+                  child: Text(
+                    'No books found 😢',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              )
+            else
+              ...books.map((b) => AdminBookCard(book: b,))
+          ],
         ),
       ),
-    ),
-
-    const SizedBox(height: 10),
-
-    Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        if (category.isNotEmpty)
-          _chip(category, onClear: () => setState(() => category = '')),
-        _chip('≥ ${minRating.toStringAsFixed(1)} ★'),
-        if (fromYear != null || toYear != null)
-          _chip(
-            'Year: ${fromYear ?? "Any"} → ${toYear ?? "Any"}',
-            onClear: () {
-              setState(() {
-                fromYear = null;
-                toYear = null;
-              });
-            },
-          ),
-        _chip(
-          (sortBy == 'rating' ? 'Sort: rating' : 'Sort: title') +
-              (descending ? ' ↓' : ' ↑'),
-        ),
-        if (category.isNotEmpty ||
-            minRating > 0 ||
-            sortBy != 'title' ||
-            descending ||
-            fromYear != null ||
-            toYear != null)
-          ActionChip(
-            label: Text('Reset'),
-            onPressed: _resetFilters,
-          ),
-      ],
-    ),
-
-    const SizedBox(height: 8),
-
-    if (books.isEmpty)
-      const Padding(
-        padding: EdgeInsets.all(32),
-        child: Center(
-          child: Text('No books found 😢', style: TextStyle(color: Colors.grey)),
-        ),
-      )
-    else
-      ...books.map((b) => BookCard(book: b)),
-  ],
-),
-
-
-      
-    
-    );      
+    );
   }
+
 
   Widget _chip(String text, {VoidCallback? onClear}) {
     return Chip(
@@ -472,6 +635,7 @@ class _FiltersResult {
   );
 }
 
+
 // FILTER SHEET
 class _FilterSheet extends StatefulWidget {
   final List<String> categories;
@@ -482,6 +646,7 @@ class _FilterSheet extends StatefulWidget {
   State<_FilterSheet> createState() => _FilterSheetState();
 }
 
+
 class _FilterSheetState extends State<_FilterSheet> {
   String category = '';
   double minRating = 0;
@@ -491,9 +656,11 @@ class _FilterSheetState extends State<_FilterSheet> {
   int? fromYear;
   int? toYear;
 
+
   // controller for the years textfield
   TextEditingController? fromYearController;
   TextEditingController? toYearController;
+
 
   // state update
   @override
@@ -514,6 +681,7 @@ class _FilterSheetState extends State<_FilterSheet> {
 
     toYearController = TextEditingController(text: toYear?.toString() ?? '');
   }
+
 
   // building the filter dropdown sheet
   @override

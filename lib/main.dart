@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:library_app/Login.dart';
 import 'package:library_app/MainPage.dart';
+import 'package:library_app/AdminMain.dart';
 
 void main() {
   runApp(const MainApp());
@@ -26,10 +27,11 @@ class MainApp extends StatelessWidget {
       ),
 
       //to navigate between pages
-      initialRoute: '/Login',
+      initialRoute: '/AdminMain',
       routes: {
         '/Login': (context) => const Login(),
         '/MainPage': (context) => const HomePage(),
+        '/AdminMain': (context) => const AdminHomePage(),
       }, // Placeholder for MainPage},
     );
   }
