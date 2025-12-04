@@ -27,7 +27,7 @@ class MainApp extends StatelessWidget {
       ),
 
       //to navigate between pages
-      initialRoute: '/AdminMain',
+      initialRoute: '/MainPage',
       routes: {
         '/Login': (context) => const Login(),
         '/MainPage': (context) => const HomePage(),
