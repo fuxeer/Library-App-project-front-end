@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:library_app/providers/filter_provider.dart';
-import 'package:library_app/providers/book_provider.dart'; // your bookListProvider
+import 'package:library_app/providers/book_provider.dart';
 
 class FilterSheet extends ConsumerStatefulWidget {
   const FilterSheet({super.key});
@@ -14,15 +14,20 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
   late TextEditingController fromYearController;
   late TextEditingController toYearController;
 
+  // Local copy of filter state
+  late FilterState tempFilter;
+
   @override
   void initState() {
     super.initState();
     final filter = ref.read(filterProvider);
+    tempFilter = filter;
+
     fromYearController = TextEditingController(
-      text: filter.fromYear?.toString() ?? '',
+      text: tempFilter.fromYear?.toString() ?? '',
     );
     toYearController = TextEditingController(
-      text: filter.toYear?.toString() ?? '',
+      text: tempFilter.toYear?.toString() ?? '',
     );
   }
 
@@ -35,7 +40,6 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final filter = ref.watch(filterProvider);
     final booksAsync = ref.watch(bookListProvider);
 
     // Compute categories dynamically from books
@@ -78,15 +82,18 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
 
           // CATEGORY DROPDOWN
           DropdownButtonFormField<String>(
-            value: filter.category.isEmpty ? '' : filter.category,
+            value: tempFilter.category.isEmpty ? '' : tempFilter.category,
             items: [
               const DropdownMenuItem(value: '', child: Text('Any')),
               ...categories.map(
                 (c) => DropdownMenuItem(value: c, child: Text(c)),
               ),
             ],
-            onChanged: (v) =>
-                ref.read(filterProvider.notifier).setCategory(v ?? ''),
+            onChanged: (v) {
+              setState(() {
+                tempFilter = tempFilter.copyWith(category: v ?? '');
+              });
+            },
             decoration: const InputDecoration(labelText: 'Category'),
           ),
 
@@ -97,20 +104,24 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
             children: [
               Expanded(
                 child: Slider(
-                  value: filter.minRating,
+                  value: tempFilter.minRating,
                   min: 0,
                   max: 5,
                   divisions: 50,
-                  label: filter.minRating.toStringAsFixed(1),
-                  onChanged: (v) => ref
-                      .read(filterProvider.notifier)
-                      .setMinRating(double.parse(v.toStringAsFixed(1))),
+                  label: tempFilter.minRating.toStringAsFixed(1),
+                  onChanged: (v) {
+                    setState(() {
+                      tempFilter = tempFilter.copyWith(
+                        minRating: double.parse(v.toStringAsFixed(1)),
+                      );
+                    });
+                  },
                 ),
               ),
               SizedBox(
                 width: 64,
                 child: Text(
-                  '${filter.minRating.toStringAsFixed(1)} ★',
+                  '${tempFilter.minRating.toStringAsFixed(1)} ★',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -127,9 +138,13 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   controller: fromYearController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(labelText: 'From Year'),
-                  onChanged: (v) => ref
-                      .read(filterProvider.notifier)
-                      .setFromYear(v.isEmpty ? null : int.tryParse(v)),
+                  onChanged: (v) {
+                    setState(() {
+                      tempFilter = tempFilter.copyWith(
+                        fromYear: v.isEmpty ? null : int.tryParse(v),
+                      );
+                    });
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -138,9 +153,13 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   controller: toYearController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(labelText: 'To Year'),
-                  onChanged: (v) => ref
-                      .read(filterProvider.notifier)
-                      .setToYear(v.isEmpty ? null : int.tryParse(v)),
+                  onChanged: (v) {
+                    setState(() {
+                      tempFilter = tempFilter.copyWith(
+                        toYear: v.isEmpty ? null : int.tryParse(v),
+                      );
+                    });
+                  },
                 ),
               ),
             ],
@@ -157,17 +176,23 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     ButtonSegment(value: 'title', label: Text('Title')),
                     ButtonSegment(value: 'rating', label: Text('Rating')),
                   ],
-                  selected: {filter.sortBy},
-                  onSelectionChanged: (s) =>
-                      ref.read(filterProvider.notifier).setSortBy(s.first),
+                  selected: {tempFilter.sortBy},
+                  onSelectionChanged: (s) {
+                    setState(() {
+                      tempFilter = tempFilter.copyWith(sortBy: s.first);
+                    });
+                  },
                 ),
               ),
               const SizedBox(width: 12),
               FilterChip(
-                label: Text(filter.descending ? 'Descending' : 'Ascending'),
-                selected: filter.descending,
-                onSelected: (v) =>
-                    ref.read(filterProvider.notifier).setDescending(v),
+                label: Text(tempFilter.descending ? 'Descending' : 'Ascending'),
+                selected: tempFilter.descending,
+                onSelected: (v) {
+                  setState(() {
+                    tempFilter = tempFilter.copyWith(descending: v);
+                  });
+                },
               ),
             ],
           ),
@@ -178,7 +203,10 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                ref.read(filterProvider.notifier).state = tempFilter;
+                Navigator.pop(context);
+              },
               child: const Text('Apply'),
             ),
           ),
