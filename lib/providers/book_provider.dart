@@ -1,7 +1,9 @@
+import 'package:library_app/CalenderTest.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:library_app/repositroy/BookRepository.dart';
 import '../model/Book.dart';
 import 'filter_provider.dart';
+import 'package:library_app/model/BookingRange.dart';
 
 final bookRepositoryProvider = Provider<BookRepository>((ref) {
   return BookRepository();
@@ -10,6 +12,14 @@ final bookRepositoryProvider = Provider<BookRepository>((ref) {
 final bookListProvider = FutureProvider<List<Book>>((ref) async {
   final bookRepository = ref.watch(bookRepositoryProvider);
   return bookRepository.getAllBooks();
+});
+
+final bookedRangesProvider = FutureProvider.family<List<BookingRange>, int>((
+  ref,
+  bookId,
+) async {
+  final repo = ref.watch(bookRepositoryProvider);
+  return repo.getBookedRanges(bookId);
 });
 
 final filteredBooksProvider = Provider<List<Book>>((ref) {
