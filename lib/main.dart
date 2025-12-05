@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:library_app/Login.dart';
 import 'package:library_app/MainPage.dart';
 import 'package:library_app/AdminMain.dart';
+import 'package:library_app/Login_test.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const ProviderScope(child: MainApp()));
 }
 
 class MainApp extends StatelessWidget {
@@ -27,7 +29,7 @@ class MainApp extends StatelessWidget {
       ),
 
       //to navigate between pages
-      initialRoute: '/MainPage',
+      initialRoute: '/Login',
       routes: {
         '/Login': (context) => const Login(),
         '/MainPage': (context) => const HomePage(),

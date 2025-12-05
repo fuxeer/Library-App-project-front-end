@@ -2,16 +2,18 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'model/User.dart';
-import 'model/CurrentUser.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:library_app/providers/CurrentUser_provider.dart';
+import 'package:library_app/repositroy/UserRepository.dart';
 
-class Login extends StatefulWidget {
+class Login extends ConsumerStatefulWidget {
   const Login({super.key});
 
   @override
-  State<Login> createState() => _LoginState();
+  ConsumerState<Login> createState() => _LoginState();
 }
 
-class _LoginState extends State<Login> {
+class _LoginState extends ConsumerState<Login> {
   final TextEditingController _usernamecontroller = TextEditingController();
   final TextEditingController _passwordcontroller = TextEditingController();
   bool _loading = false;
@@ -46,17 +48,23 @@ class _LoginState extends State<Login> {
           body: jsonEncode({"userName": username, "password": password}),
         );
 
-        if (!mounted) return;
+        // successful login
+
         // successful login
         if (response.statusCode == 200) {
-          // parse user data
           final responseData = jsonDecode(response.body);
-          currentUser = User.fromJson(responseData);
-          print(response.body);
+          final user = User.fromJson(responseData);
+
+          // ✅ Use only setUser
+          ref.read(currentUserProvider.notifier).setUser(user);
+
+          // Optional short delay to ensure provider updates
+          await Future.delayed(const Duration(seconds: 4));
+
           Navigator.pushNamedAndRemoveUntil(
             context,
-            '/MainPage', // go to MainPage
-            (route) => false, // remove all previous pages
+            '/MainPage',
+            (route) => false,
           );
         }
         // invalid user input
@@ -80,7 +88,6 @@ class _LoginState extends State<Login> {
       }
       //
       finally {
-        if (!mounted) return;
         setState(() {
           _loading = false;
         });

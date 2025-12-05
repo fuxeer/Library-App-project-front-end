@@ -82,16 +82,20 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      userID: json['UserID'],
-      name: json['Name'],
-      userName: json['UserName'],
-      password: json['Password'],
-      email: json['Email'],
-      dateOfBirth: json['DateOfBirth'],
-      gender: json['Gender'],
-      phoneNo: json['PhoneNo'],
-      address: json['Address'],
-      userType: json['UserType'],
+      userID: json['userID'] is int
+          ? json['userID']
+          : int.tryParse(json['userID'].toString()),
+      name: json['name']?.toString(),
+      userName: json['userName']?.toString(),
+      password: json['password']?.toString(),
+      email: json['email']?.toString(),
+      dateOfBirth: json['dateOfBirth']?.toString(),
+      gender: json['gender']?.toString(),
+      phoneNo: json['phoneNo'] is int
+          ? json['phoneNo']
+          : int.tryParse(json['phoneNo'].toString()),
+      address: json['address']?.toString(),
+      userType: json['userType']?.toString(),
     );
   }
 

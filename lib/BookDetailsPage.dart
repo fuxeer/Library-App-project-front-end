@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:library_app/providers/CurrentUser_provider.dart';
+import 'package:library_app/providers/ReservationRepositoryProvider.dart';
 import '../model/Book.dart';
 import '../model/BookingRange.dart';
 import '../repositroy/BookRepository.dart';
@@ -24,6 +26,7 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
   void initState() {
     super.initState();
     fetchAvailableRanges();
+    print(widget.book.Description);
   }
 
   Future<void> fetchAvailableRanges() async {
@@ -144,15 +147,43 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: startDate != null && endDate != null
-                          ? () {
-                              // Call your booking API here
-                              print(
-                                "Booking from ${formatDate(startDate!)} to ${formatDate(endDate!)}",
+                      onPressed: (startDate != null && endDate != null)
+                          ? () async {
+                              final user = ref.read(
+                                currentUserProvider,
+                              ); // ✅ use read here
+
+                              // ✅ Check for null
+                              if (user == null || user.userID == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("You must login first!"),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final repository = ref.read(
+                                reservationRepositoryProvider,
                               );
+                              final bookID = widget.book.BookID;
+                              print(user.userID);
+                              final userID = user.userID!;
+
+                              final success = await repository.reserveDate(
+                                bookID,
+                                userID,
+                                startDate,
+                                endDate!,
+                              );
+
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Booking confirmed!"),
+                                SnackBar(
+                                  content: Text(
+                                    success
+                                        ? "Reservation successful!"
+                                        : "Reservation failed",
+                                  ),
                                 ),
                               );
                             }
