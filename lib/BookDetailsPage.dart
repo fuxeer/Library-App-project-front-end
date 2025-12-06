@@ -21,6 +21,7 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
   List<BookingRange> availableRanges = [];
   DateTime? startDate;
   DateTime? endDate;
+  bool isProcessing = false;
 
   @override
   void initState() {
@@ -147,45 +148,67 @@ class _BookDetailsPageState extends ConsumerState<BookDetailsPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: (startDate != null && endDate != null)
+                      onPressed:
+                          (startDate != null &&
+                              endDate != null &&
+                              !isProcessing)
                           ? () async {
-                              final user = ref.read(
-                                currentUserProvider,
-                              ); // ✅ use read here
+                              setState(() => isProcessing = true);
 
-                              // ✅ Check for null
+                              final user = ref.read(currentUserProvider);
                               if (user == null || user.userID == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text("You must login first!"),
                                   ),
                                 );
+                                setState(() => isProcessing = false);
                                 return;
                               }
 
                               final repository = ref.read(
                                 reservationRepositoryProvider,
                               );
-                              final bookID = widget.book.BookID;
-                              print(user.userID);
-                              final userID = user.userID!;
 
                               final success = await repository.reserveDate(
-                                bookID,
-                                userID,
+                                widget.book.BookID,
+                                user.userID!,
                                 startDate,
                                 endDate!,
                               );
 
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    success
-                                        ? "Reservation successful!"
-                                        : "Reservation failed",
+                              if (success) {
+                                // Show popup
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) {
+                                    return const AlertDialog(
+                                      title: Text("Success"),
+                                      content: Text(
+                                        "Your reservation was successful!",
+                                      ),
+                                    );
+                                  },
+                                );
+
+                                await Future.delayed(
+                                  const Duration(seconds: 2),
+                                );
+
+                                // Close popup
+                                if (mounted) Navigator.of(context).pop();
+
+                                // Close page
+                                if (mounted) Navigator.of(context).pop();
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Reservation failed"),
                                   ),
-                                ),
-                              );
+                                );
+                                setState(() => isProcessing = false);
+                              }
                             }
                           : null,
                       child: const Text("Confirm Booking"),

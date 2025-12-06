@@ -30,4 +30,33 @@ class UserRepository {
     }
     return null;
   }
+
+  Future<bool> updateUserPartial({
+    required int userId,
+    String? name,
+    String? email,
+    String? phoneNo,
+    String? address,
+  }) async {
+    final url = Uri.parse("https://localhost:7145/api/Users/update-partial");
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "userID": userId,
+          "name": name,
+          "email": email,
+          "phoneNo": phoneNo,
+          "address": address,
+        }),
+      );
+
+      return response.statusCode == 204; // NoContent
+    } catch (e) {
+      print("Error updating user: $e");
+      return false;
+    }
+  }
 }

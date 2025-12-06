@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:library_app/BookCard.dart';
-import 'package:library_app/model/CurrentUser.dart';
+import 'package:library_app/providers/CurrentUser_provider.dart';
 import 'package:library_app/providers/book_provider.dart';
 import 'package:library_app/providers/filter_provider.dart';
 import 'package:library_app/widgets/Filtersheet.dart';
@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:library_app/model/Book.dart';
+import 'package:library_app/History.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -72,11 +73,22 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _openProfileDialog() {
-    Uint8List? tempPic = profilePicBytes;
-    final usernameCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final addressCtrl = TextEditingController();
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    // Temporary variables for edits
+    String tempName = user.name ?? '';
+    String tempEmail = user.email ?? '';
+    int? tempPhone = user.phoneNo;
+    String tempAddress = user.address ?? '';
+
+    // Track which fields are in edit mode
+    Map<String, bool> editMode = {
+      'name': false,
+      'email': false,
+      'phone': false,
+      'address': false,
+    };
 
     showDialog(
       context: context,
@@ -89,36 +101,53 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  InkWell(
-                    onTap: () async {
-                      final picked = await pickImageBytes();
-                      if (picked != null) {
-                        setDialogState(() => tempPic = picked);
-                      }
-                    },
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.purple[100],
-                      backgroundImage: tempPic != null
-                          ? MemoryImage(tempPic!)
-                          : null,
-                      child: tempPic == null
-                          ? const Icon(
-                              Icons.person,
-                              size: 50,
-                              color: Colors.black,
-                            )
-                          : null,
-                    ),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.purple[100],
+                    child: const Icon(Icons.person, size: 50),
                   ),
                   const SizedBox(height: 20),
-                  _editField("username", usernameCtrl, maxLines: 1),
-                  const SizedBox(height: 20),
-                  _editField("email", emailCtrl, maxLines: 1),
-                  const SizedBox(height: 20),
-                  _editField("phone no", phoneCtrl, maxLines: 1),
-                  const SizedBox(height: 20),
-                  _editField("address", addressCtrl, maxLines: 1),
+
+                  _editableField(
+                    label: "Name",
+                    value: tempName,
+                    isEditing: editMode['name']!,
+                    onEditPressed: () =>
+                        setDialogState(() => editMode['name'] = true),
+                    onChanged: (v) => tempName = v,
+                  ),
+                  const SizedBox(height: 16),
+
+                  _editableField(
+                    label: "Email",
+                    value: tempEmail,
+                    isEditing: editMode['email']!,
+                    onEditPressed: () =>
+                        setDialogState(() => editMode['email'] = true),
+                    onChanged: (v) => tempEmail = v,
+                  ),
+                  const SizedBox(height: 16),
+
+                  _editableField(
+                    label: "Phone",
+                    value: tempPhone?.toString() ?? '',
+                    isEditing: editMode['phone']!,
+                    keyboardType: TextInputType.number,
+                    onEditPressed: () =>
+                        setDialogState(() => editMode['phone'] = true),
+                    onChanged: (v) => tempPhone = int.tryParse(v),
+                  ),
+                  const SizedBox(height: 16),
+
+                  _editableField(
+                    label: "Address",
+                    value: tempAddress,
+                    isEditing: editMode['address']!,
+                    onEditPressed: () =>
+                        setDialogState(() => editMode['address'] = true),
+                    onChanged: (v) => tempAddress = v,
+                  ),
+
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -129,9 +158,40 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
-                        onPressed: () {
-                          setState(() => profilePicBytes = tempPic);
-                          Navigator.pop(context);
+                        onPressed: () async {
+                          final user = ref.read(currentUserProvider);
+                          if (user == null) return;
+
+                          bool success = await ref
+                              .read(userRepositoryProvider)
+                              .updateUserPartial(
+                                userId: user.userID!,
+                                name: tempName,
+                                email: tempEmail,
+                                phoneNo: tempPhone?.toString(),
+                                address: tempAddress,
+                              );
+
+                          if (success) {
+                            // Update local state only if backend update succeeded
+                            ref
+                                .read(currentUserProvider.notifier)
+                                .update(
+                                  name: tempName,
+                                  email: tempEmail,
+                                  phoneNo: tempPhone,
+                                  address: tempAddress,
+                                );
+
+                            Navigator.pop(context);
+                          } else {
+                            // Show error
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Failed to update user"),
+                              ),
+                            );
+                          }
                         },
                         child: const Text("Save"),
                       ),
@@ -143,6 +203,43 @@ class _HomePageState extends ConsumerState<HomePage> {
           },
         ),
       ),
+    );
+  }
+
+  // Helper widget: shows text initially, becomes TextField when edit is pressed
+  Widget _editableField({
+    required String label,
+    required String value,
+    required bool isEditing,
+    required VoidCallback onEditPressed,
+    required void Function(String) onChanged,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    if (isEditing) {
+      final controller = TextEditingController(text: value);
+      return TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        onChanged: onChanged,
+        keyboardType: keyboardType,
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('$label: $value', style: const TextStyle(fontSize: 16)),
+        CircleAvatar(
+          radius: 16,
+          child: IconButton(
+            icon: const Icon(Icons.edit, size: 16),
+            onPressed: onEditPressed,
+          ),
+        ),
+      ],
     );
   }
 
@@ -187,6 +284,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final filteredBooks = ref.watch(filteredBooksProvider);
     final filter = ref.watch(filterProvider);
+    final currentUser = ref.watch(currentUserProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -317,7 +415,12 @@ class _HomePageState extends ConsumerState<HomePage> {
             ListTile(
               leading: const Icon(Icons.bookmark),
               title: const Text("Reservations"),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => UserHistoryPage()),
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.library_books),

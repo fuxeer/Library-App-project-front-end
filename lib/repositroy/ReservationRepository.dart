@@ -32,4 +32,18 @@ class ReservationRepository {
       return false;
     }
   }
+
+  Future<Map<String, dynamic>> getUserHistory(int userId) async {
+    final url = Uri.parse(
+      "https://localhost:7145/api/Reservation/$userId/history",
+    );
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to load user reservation history");
+    }
+  }
 }
